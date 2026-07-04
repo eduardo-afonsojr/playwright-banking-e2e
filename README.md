@@ -1,3 +1,14 @@
+# playwright-banking-e2e
+
+[![CI](https://github.com/EduardoAsj/playwright-banking-e2e/actions/workflows/ci.yml/badge.svg)](https://github.com/EduardoAsj/playwright-banking-e2e/actions/workflows/ci.yml)
+
+QA automation showcase: a mini banking app with a complete quality layer on
+top — Playwright E2E (Page Object Model), Jest unit/integration tests,
+Postman/Newman API tests, and a GitHub Actions pipeline with a GitLab CI
+mirror. Full documentation coming in the README polish phase.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

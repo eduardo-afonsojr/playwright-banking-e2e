@@ -1,0 +1,91 @@
+# Mirror of .github/workflows/ci.yml in GitLab CI syntax.
+#
+# Stage-for-stage equivalence with the GitHub Actions pipeline:
+#   lint  -> lint            (ESLint + tsc)
+#   unit  -> unit-integration (Jest against a MongoDB service)
+#   api   -> api-tests       (Newman against the production build)
+#   e2e   -> e2e             (Playwright, 2 parallel shards)
+#   report-> e2e-report      (merge shard blobs into one HTML report)
+#
+# Differences worth knowing:
+# - Services are reachable by hostname (mongo), not localhost, so
+#   MONGODB_URI is overridden here.
+# - Sharding uses `parallel: 2` + CI_NODE_INDEX/CI_NODE_TOTAL instead of a
+#   matrix, and the report job collects shard artifacts via `needs`.
+# - The e2e jobs run in the official Playwright image (browsers preinstalled);
+#   keep its tag in sync with the @playwright/test version in package.json.
+
+image: node:20
+
+stages: [lint, unit, api, e2e, report]
+
+variables:
+  MONGODB_URI: "mongodb://mongo:27017"
+  MONGODB_DB: "banking"
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+
+cache:
+  key:
+    files:
+      - package-lock.json
+  paths:
+    - .npm
+
+.install: &install
+  - npm ci --prefer-offline
+
+lint:
+  stage: lint
+  script:
+    - *install
+    - npm run lint
+    - npx tsc --noEmit
+
+unit-integration:
+  stage: unit
+  services:
+    - mongo:7
+  script:
+    - *install
+    - npm test
+
+api-tests:
+  stage: api
+  services:
+    - mongo:7
+  script:
+    - *install
+    - npm run build
+    - npm run start &
+    - timeout 30 sh -c 'until curl -s -o /dev/null http://localhost:3000; do sleep 1; done'
+    - npm run test:api
+
+e2e:
+  stage: e2e
+  image: mcr.microsoft.com/playwright:v1.61.1-noble
+  services:
+    - mongo:7
+  parallel: 2
+  script:
+    - *install
+    - npm run build
+    # Playwright's webServer starts `npm run start` itself (CI mode).
+    - npx playwright test --shard=$CI_NODE_INDEX/$CI_NODE_TOTAL
+  artifacts:
+    when: always
+    paths:
+      - blob-report
+    expire_in: 1 week
+
+e2e-report:
+  stage: report
+  needs:
+    - e2e
+  when: always
+  script:
+    - *install
+    - npx playwright merge-reports --reporter html ./blob-report
+  artifacts:
+    paths:
+      - playwright-report
+    expire_in: 2 weeks

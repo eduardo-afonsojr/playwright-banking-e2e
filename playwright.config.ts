@@ -11,8 +11,10 @@ export default defineConfig({
   // One retry in CI so the trace-on-first-retry artifact gets captured for
   // genuinely flaky failures; locally a failure should fail loudly.
   retries: process.env.CI ? 1 : 0,
+  // CI runs sharded, so each shard emits a blob report; a follow-up CI job
+  // merges the blobs into the single HTML report published as an artifact.
   reporter: process.env.CI
-    ? [["list"], ["html", { open: "never" }], ["github"]]
+    ? [["list"], ["blob"], ["github"]]
     : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL,
