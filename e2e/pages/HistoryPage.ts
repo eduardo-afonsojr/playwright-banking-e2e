@@ -10,6 +10,10 @@ export class HistoryPage {
   readonly applyButton: Locator;
   readonly rows: Locator;
   readonly emptyState: Locator;
+  readonly pageInfo: Locator;
+  readonly pageNumber: Locator;
+  readonly prevPage: Locator;
+  readonly nextPage: Locator;
 
   constructor(readonly page: Page) {
     this.nav = new NavBar(page);
@@ -19,6 +23,12 @@ export class HistoryPage {
     this.applyButton = page.getByTestId("history-filter-apply");
     this.rows = page.getByTestId("transaction-row");
     this.emptyState = page.getByTestId("history-empty");
+    // Prev/Next render as links when actionable and as disabled spans
+    // (aria-disabled) on the first/last page, under the same test ids.
+    this.pageInfo = page.getByTestId("history-page-info");
+    this.pageNumber = page.getByTestId("history-page-number");
+    this.prevPage = page.getByTestId("history-prev");
+    this.nextPage = page.getByTestId("history-next");
   }
 
   async goto(): Promise<void> {
@@ -46,6 +56,18 @@ export class HistoryPage {
     }
     await this.applyButton.click();
     await this.page.waitForURL("**/history?*");
+  }
+
+  /** Navigates to the next page and waits for the URL to reflect it. */
+  async goToNextPage(): Promise<void> {
+    await this.nextPage.click();
+    await this.page.waitForURL(/[?&]page=/);
+  }
+
+  /** Navigates to the previous page and waits for the URL to reflect it. */
+  async goToPreviousPage(): Promise<void> {
+    await this.prevPage.click();
+    await this.page.waitForURL(/[?&]page=/);
   }
 
   /** The account name shown in a given row (column 2). */

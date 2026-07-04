@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ObjectId, type Filter } from "mongodb";
 import { getAuthenticatedUser } from "@/lib/auth/session";
@@ -6,6 +7,7 @@ import {
   transactionsCollection,
 } from "@/lib/db/collections";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { TRANSACTIONS_PAGE_SIZE } from "@/lib/pagination";
 import { AppNav } from "@/components/AppNav";
 import type { TransactionDocument } from "@/types/models";
 
@@ -15,6 +17,7 @@ interface HistorySearchParams {
   accountId?: string;
   from?: string;
   to?: string;
+  page?: string;
 }
 
 export default async function HistoryPage({
@@ -36,7 +39,7 @@ export default async function HistoryPage({
     userAccounts.map((account) => [account._id.toHexString(), account.name]),
   );
 
-  const { accountId, from, to } = searchParams;
+  const { accountId, from, to, page: pageParam } = searchParams;
 
   let accountFilter = userAccounts.map((account) => account._id);
   if (accountId && ObjectId.isValid(accountId)) {
@@ -67,10 +70,37 @@ export default async function HistoryPage({
   }
 
   const transactions = await transactionsCollection();
+  const totalCount = await transactions.countDocuments(filter);
+  const totalPages = Math.max(1, Math.ceil(totalCount / TRANSACTIONS_PAGE_SIZE));
+
+  // The UI clamps out-of-range pages instead of erroring: a stale or
+  // hand-edited URL should still land somewhere sensible.
+  const requestedPage = Number(pageParam);
+  const page = Number.isInteger(requestedPage)
+    ? Math.min(Math.max(requestedPage, 1), totalPages)
+    : 1;
+
+  // Secondary sort on _id: debit/credit pairs share the same createdAt, and
+  // pagination needs a total order to not repeat or skip rows across pages.
   const results = await transactions
     .find(filter)
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * TRANSACTIONS_PAGE_SIZE)
+    .limit(TRANSACTIONS_PAGE_SIZE)
     .toArray();
+
+  const showingFrom = (page - 1) * TRANSACTIONS_PAGE_SIZE + 1;
+  const showingTo = Math.min(page * TRANSACTIONS_PAGE_SIZE, totalCount);
+
+  // Prev/Next links preserve the active filters.
+  function pageHref(target: number): string {
+    const params = new URLSearchParams();
+    if (accountId) params.set("accountId", accountId);
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    params.set("page", String(target));
+    return `/history?${params.toString()}`;
+  }
 
   return (
     <>
@@ -174,6 +204,50 @@ export default async function HistoryPage({
               })}
             </tbody>
             </table>
+            <div className="pagination" data-testid="history-pagination">
+              <span data-testid="history-page-info">
+                Showing {showingFrom}–{showingTo} of {totalCount}
+              </span>
+              <span className="pagination-controls">
+                {page > 1 ? (
+                  <Link
+                    className="page-link"
+                    data-testid="history-prev"
+                    href={pageHref(page - 1)}
+                  >
+                    ← Previous
+                  </Link>
+                ) : (
+                  <span
+                    className="page-link disabled"
+                    data-testid="history-prev"
+                    aria-disabled="true"
+                  >
+                    ← Previous
+                  </span>
+                )}
+                <span className="page-current" data-testid="history-page-number">
+                  Page {page} of {totalPages}
+                </span>
+                {page < totalPages ? (
+                  <Link
+                    className="page-link"
+                    data-testid="history-next"
+                    href={pageHref(page + 1)}
+                  >
+                    Next →
+                  </Link>
+                ) : (
+                  <span
+                    className="page-link disabled"
+                    data-testid="history-next"
+                    aria-disabled="true"
+                  >
+                    Next →
+                  </span>
+                )}
+              </span>
+            </div>
           </div>
         )}
       </main>

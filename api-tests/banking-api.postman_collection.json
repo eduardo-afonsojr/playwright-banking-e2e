@@ -543,10 +543,17 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "",
-                  "const transactions = pm.response.json().transactions;",
+                  "const body = pm.response.json();",
+                  "const transactions = body.transactions;",
                   "",
-                  "pm.test(\"contains the 12 seeded entries plus the pair from this run's transfer\", function () {",
-                  "    pm.expect(transactions).to.have.lengthOf(14);",
+                  "pm.test(\"returns one page and counts the 12 seeded entries plus this run's transfer pair\", function () {",
+                  "    pm.expect(transactions).to.have.lengthOf(10);",
+                  "    pm.expect(body.pagination).to.eql({",
+                  "        page: 1,",
+                  "        pageSize: 10,",
+                  "        totalCount: 14,",
+                  "        totalPages: 2",
+                  "    });",
                   "});",
                   "",
                   "pm.test(\"is sorted newest first\", function () {",
@@ -577,6 +584,71 @@
               "raw": "{{baseUrl}}/api/transactions",
               "host": ["{{baseUrl}}"],
               "path": ["api", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Transactions — second page",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns the 4 remaining entries with page metadata\", function () {",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.transactions).to.have.lengthOf(4);",
+                  "    pm.expect(body.pagination.page).to.eql(2);",
+                  "    pm.expect(body.pagination.totalPages).to.eql(2);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?page=2",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [{ "key": "page", "value": "2" }]
+            }
+          }
+        },
+        {
+          "name": "Transactions — invalid page",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?page=0",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [{ "key": "page", "value": "0" }]
             }
           }
         },

@@ -6,14 +6,19 @@ import {
 } from "@/lib/db/collections";
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { toTransactionDto } from "@/lib/serialize";
+import { TRANSACTIONS_PAGE_SIZE, MAX_PAGE_SIZE } from "@/lib/pagination";
 import type { TransactionDocument } from "@/types/models";
 
 /**
- * GET /api/transactions?accountId=...&from=YYYY-MM-DD&to=YYYY-MM-DD
+ * GET /api/transactions?accountId=...&from=YYYY-MM-DD&to=YYYY-MM-DD&page=1&pageSize=10
  *
- * Returns the user's transactions, newest first. All filters are optional:
+ * Returns one page of the user's transactions, newest first, plus
+ * pagination metadata. All parameters are optional:
  * - accountId: restrict to a single account (must belong to the user)
  * - from / to: inclusive date range on the transaction date
+ * - page: 1-based page number (default 1); a page past the end returns
+ *   an empty list with the metadata intact
+ * - pageSize: items per page (default 10, max 100)
  */
 export async function GET(request: Request) {
   const user = await getAuthenticatedUser();
@@ -81,13 +86,44 @@ export async function GET(request: Request) {
     filter.createdAt = createdAt;
   }
 
+  const pageParam = searchParams.get("page");
+  const page = pageParam === null ? 1 : Number(pageParam);
+  if (!Number.isInteger(page) || page < 1) {
+    return NextResponse.json(
+      { error: "page must be a positive integer." },
+      { status: 400 },
+    );
+  }
+
+  const pageSizeParam = searchParams.get("pageSize");
+  const pageSize =
+    pageSizeParam === null ? TRANSACTIONS_PAGE_SIZE : Number(pageSizeParam);
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > MAX_PAGE_SIZE) {
+    return NextResponse.json(
+      { error: `pageSize must be an integer between 1 and ${MAX_PAGE_SIZE}.` },
+      { status: 400 },
+    );
+  }
+
   const transactions = await transactionsCollection();
+  const totalCount = await transactions.countDocuments(filter);
+  // Secondary sort on _id: transfers create debit/credit pairs sharing the
+  // same createdAt, and without a total order documents could repeat or go
+  // missing across page boundaries.
   const results = await transactions
     .find(filter)
-    .sort({ createdAt: -1 })
+    .sort({ createdAt: -1, _id: -1 })
+    .skip((page - 1) * pageSize)
+    .limit(pageSize)
     .toArray();
 
   return NextResponse.json({
     transactions: results.map(toTransactionDto),
+    pagination: {
+      page,
+      pageSize,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+    },
   });
 }

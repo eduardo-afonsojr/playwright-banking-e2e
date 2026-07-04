@@ -565,3 +565,42 @@ td:first-child {
   padding: 2.5rem 1.5rem;
   text-align: center;
 }
+
+/* ---------- Pagination ---------- */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.1rem;
+  background: #fafbfc;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.page-link {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.page-link:hover {
+  text-decoration: underline;
+}
+
+.page-link.disabled {
+  color: var(--text-soft);
+  cursor: default;
+}
+
+.page-current {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

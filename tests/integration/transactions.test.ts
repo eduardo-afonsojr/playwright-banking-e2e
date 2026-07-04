@@ -4,6 +4,7 @@
  */
 import { GET as transactionsRoute } from "@/app/api/transactions/route";
 import { seedDatabase, SEED_ACCOUNTS, SEED_TRANSFERS } from "@/lib/db/seed";
+import { TRANSACTIONS_PAGE_SIZE } from "@/lib/pagination";
 import { accountsCollection } from "@/lib/db/collections";
 import { loginAsSeedUser } from "../helpers/api";
 import { setSessionToken } from "../helpers/mock-cookies";
@@ -49,16 +50,89 @@ describe("GET /api/transactions", () => {
     expect(response.status).toBe(401);
   });
 
-  it("returns all seeded transactions, newest first", async () => {
+  it("returns the first page newest first, with pagination metadata", async () => {
     const response = await transactionsRoute(getRequest());
     expect(response.status).toBe(200);
 
-    const { transactions } = await response.json();
-    expect(transactions).toHaveLength(SEED_TRANSFERS.length * 2);
+    const { transactions, pagination } = await response.json();
+    expect(transactions).toHaveLength(TRANSACTIONS_PAGE_SIZE);
+    expect(pagination).toEqual({
+      page: 1,
+      pageSize: TRANSACTIONS_PAGE_SIZE,
+      totalCount: SEED_TRANSFERS.length * 2,
+      totalPages: Math.ceil(
+        (SEED_TRANSFERS.length * 2) / TRANSACTIONS_PAGE_SIZE,
+      ),
+    });
 
     const dates = transactions.map((t: { createdAt: string }) => t.createdAt);
     const sorted = [...dates].sort().reverse();
     expect(dates).toEqual(sorted);
+  });
+
+  it("returns the remaining entries on the last page", async () => {
+    const response = await transactionsRoute(getRequest("?page=2"));
+    expect(response.status).toBe(200);
+
+    const { transactions, pagination } = await response.json();
+    expect(transactions).toHaveLength(
+      SEED_TRANSFERS.length * 2 - TRANSACTIONS_PAGE_SIZE,
+    );
+    expect(pagination.page).toBe(2);
+  });
+
+  it("paginates without repeating or skipping entries", async () => {
+    // Debit/credit pairs share a createdAt, so this exercises the _id
+    // tiebreaker: page 1 + page 2 must partition the full set exactly.
+    const [first, second] = await Promise.all([
+      transactionsRoute(getRequest("?page=1")),
+      transactionsRoute(getRequest("?page=2")),
+    ]);
+    const pageOne = (await first.json()).transactions;
+    const pageTwo = (await second.json()).transactions;
+
+    const ids = [...pageOne, ...pageTwo].map((t: { id: string }) => t.id);
+    expect(ids).toHaveLength(SEED_TRANSFERS.length * 2);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("respects a custom pageSize", async () => {
+    const response = await transactionsRoute(getRequest("?pageSize=5&page=3"));
+    const { transactions, pagination } = await response.json();
+    expect(transactions).toHaveLength(2);
+    expect(pagination).toEqual({
+      page: 3,
+      pageSize: 5,
+      totalCount: 12,
+      totalPages: 3,
+    });
+  });
+
+  it("returns an empty page past the end, keeping the metadata", async () => {
+    const response = await transactionsRoute(getRequest("?page=99"));
+    expect(response.status).toBe(200);
+    const { transactions, pagination } = await response.json();
+    expect(transactions).toEqual([]);
+    expect(pagination.totalCount).toBe(SEED_TRANSFERS.length * 2);
+  });
+
+  it.each([
+    ["zero", "?page=0"],
+    ["negative", "?page=-1"],
+    ["non-numeric", "?page=abc"],
+    ["fractional", "?page=1.5"],
+  ])("rejects a %s page with 400", async (_label, query) => {
+    const response = await transactionsRoute(getRequest(query));
+    expect(response.status).toBe(400);
+  });
+
+  it.each([
+    ["zero", "?pageSize=0"],
+    ["above the maximum", "?pageSize=101"],
+    ["non-numeric", "?pageSize=big"],
+  ])("rejects a pageSize %s with 400", async (_label, query) => {
+    const response = await transactionsRoute(getRequest(query));
+    expect(response.status).toBe(400);
   });
 
   it("filters by account", async () => {

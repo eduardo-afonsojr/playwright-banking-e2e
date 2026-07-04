@@ -28,7 +28,9 @@ money between them. Four API routes back the UI, all MongoDB-backed:
 - `GET /api/accounts` — the user's accounts and balances
 - `POST /api/transfers` — validates and executes transfers (insufficient
   funds, negative/zero/sub-cent amounts, same-account, unknown account)
-- `GET /api/transactions` — history with account and date-range filters
+- `GET /api/transactions` — history with account and date-range filters,
+  paginated (`page`/`pageSize`) with a stable sort so debit/credit pairs
+  sharing a timestamp never repeat or vanish across page boundaries
 
 A single seed module (`src/lib/db/seed.ts`) resets the database to a known
 state: one user, two accounts, and 12 transactions spread over 35 days so
