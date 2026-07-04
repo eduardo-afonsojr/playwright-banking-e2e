@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/eduardo-afonsojr/playwright-banking-e2e/actions/workflows/ci.yml/badge.svg)](https://github.com/eduardo-afonsojr/playwright-banking-e2e/actions/workflows/ci.yml)
 
+**Live demo:** [playwright-banking-e2e.vercel.app](https://playwright-banking-e2e.vercel.app) — sign in with `jane.doe` / `Password123!` (fictional seed data; Vercel + MongoDB Atlas free tier)
+
 A test-architecture showcase. The application — a small banking app (login,
 accounts dashboard, transfers, transaction history) built with Next.js 14,
 TypeScript and MongoDB — is deliberately simple: it exists to be tested. The
