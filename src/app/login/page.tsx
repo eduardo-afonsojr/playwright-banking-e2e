@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "@/lib/auth/session";
 import { LoginForm } from "@/components/LoginForm";
+import { BrandMark } from "@/components/BrandMark";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,19 @@ export default async function LoginPage() {
   }
 
   return (
-    <main>
-      <h1>Sign in to Mini Bank</h1>
-      <div className="card">
-        <LoginForm />
+    <main className="login-shell">
+      <div className="login-panel">
+        <div className="login-brand">
+          <BrandMark />
+          Mini Bank
+        </div>
+        <div className="login-card">
+          <h1>Welcome back</h1>
+          <p className="login-hint">
+            Demo credentials: <code>jane.doe</code> / <code>Password123!</code>
+          </p>
+          <LoginForm />
+        </div>
       </div>
     </main>
   );

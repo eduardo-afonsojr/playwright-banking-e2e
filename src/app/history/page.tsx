@@ -77,6 +77,9 @@ export default async function HistoryPage({
       <AppNav fullName={user.fullName} />
       <main>
         <h1>Transaction history</h1>
+        <p className="page-subtitle">
+          Every movement across your accounts, newest first.
+        </p>
 
         {/* Plain GET form: filters land in the URL, so filtered views are
             linkable and the page stays fully server-rendered. */}
@@ -130,7 +133,8 @@ export default async function HistoryPage({
             No transactions match the current filters.
           </div>
         ) : (
-          <table data-testid="history-table">
+          <div className="table-card">
+            <table data-testid="history-table">
             <thead>
               <tr>
                 <th>Date</th>
@@ -169,7 +173,8 @@ export default async function HistoryPage({
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
         )}
       </main>
     </>

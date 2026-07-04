@@ -65,7 +65,12 @@ export function LoginForm() {
           required
         />
       </div>
-      <button type="submit" data-testid="login-submit" disabled={submitting}>
+      <button
+        type="submit"
+        className="block"
+        data-testid="login-submit"
+        disabled={submitting}
+      >
         {submitting ? "Signing in…" : "Sign in"}
       </button>
     </form>

@@ -58,35 +58,52 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
           {success}
         </div>
       )}
-      <div className="form-field">
-        <label htmlFor="from-account">From</label>
-        <select
-          id="from-account"
-          data-testid="transfer-from"
-          value={fromAccountId}
-          onChange={(event) => setFromAccountId(event.target.value)}
-        >
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="form-field">
-        <label htmlFor="to-account">To</label>
-        <select
-          id="to-account"
-          data-testid="transfer-to"
-          value={toAccountId}
-          onChange={(event) => setToAccountId(event.target.value)}
-        >
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.name}
-            </option>
-          ))}
-        </select>
+      <div className="transfer-row">
+        <div className="form-field">
+          <label htmlFor="from-account">From</label>
+          <select
+            id="from-account"
+            data-testid="transfer-from"
+            value={fromAccountId}
+            onChange={(event) => setFromAccountId(event.target.value)}
+          >
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <span className="transfer-arrow" aria-hidden="true">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14" />
+            <path d="M13 6l6 6-6 6" />
+          </svg>
+        </span>
+        <div className="form-field">
+          <label htmlFor="to-account">To</label>
+          <select
+            id="to-account"
+            data-testid="transfer-to"
+            value={toAccountId}
+            onChange={(event) => setToAccountId(event.target.value)}
+          >
+            {accounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="form-field">
         <label htmlFor="amount">Amount (USD)</label>

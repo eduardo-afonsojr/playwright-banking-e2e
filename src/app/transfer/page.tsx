@@ -25,16 +25,23 @@ export default async function TransferPage() {
       <AppNav fullName={user.fullName} />
       <main>
         <h1>Transfer money</h1>
+        <p className="page-subtitle">
+          Move money between your accounts instantly.
+        </p>
+
         <div className="card">
           <h2>Current balances</h2>
-          <ul data-testid="transfer-balances">
+          {/* Text stays "Name: $amount" — the E2E specs assert it. */}
+          <ul className="balance-strip" data-testid="transfer-balances">
             {userAccounts.map((account) => (
               <li key={account._id.toHexString()}>
-                {account.name}: {formatCurrency(account.balance)}
+                {account.name}:{" "}
+                <strong>{formatCurrency(account.balance)}</strong>
               </li>
             ))}
           </ul>
         </div>
+
         <div className="card">
           <TransferForm accounts={userAccounts.map(toAccountDto)} />
         </div>

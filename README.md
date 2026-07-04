@@ -18,6 +18,8 @@ point of this repository is the quality layer wrapped around it:
 
 ## The demo application
 
+![Mini Bank dashboard](docs/app-dashboard.png)
+
 A seeded user (`jane.doe` / `Password123!`) owns two accounts and can move
 money between them. Four API routes back the UI, all MongoDB-backed:
 
