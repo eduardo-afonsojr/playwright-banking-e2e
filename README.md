@@ -1,6 +1,6 @@
 # playwright-banking-e2e
 
-[![CI](https://github.com/EduardoAsj/playwright-banking-e2e/actions/workflows/ci.yml/badge.svg)](https://github.com/EduardoAsj/playwright-banking-e2e/actions/workflows/ci.yml)
+[![CI](https://github.com/eduardo-afonsojr/playwright-banking-e2e/actions/workflows/ci.yml/badge.svg)](https://github.com/eduardo-afonsojr/playwright-banking-e2e/actions/workflows/ci.yml)
 
 QA automation showcase: a mini banking app with a complete quality layer on
 top — Playwright E2E (Page Object Model), Jest unit/integration tests,
