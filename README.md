@@ -127,11 +127,11 @@ because otherwise Postman silently attaches the logged-in cookie to the
 
 ```mermaid
 flowchart LR
-    A[Lint & typecheck] --> B[Jest\nunit + integration]
-    B --> C[Newman\nAPI tests]
-    C --> D1[Playwright\nshard 1/2]
-    C --> D2[Playwright\nshard 2/2]
-    D1 --> E[Merge HTML report\nupload artifact]
+    A["Lint & typecheck"] --> B["Jest<br/>unit + integration"]
+    B --> C["Newman<br/>API tests"]
+    C --> D1["Playwright<br/>shard 1/2"]
+    C --> D2["Playwright<br/>shard 2/2"]
+    D1 --> E["Merge HTML report<br/>upload artifact"]
     D2 --> E
 ```
 
