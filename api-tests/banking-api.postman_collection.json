@@ -1,0 +1,835 @@
+{
+  "info": {
+    "_postman_id": "9f1c1a52-4a1a-4a5e-9a7e-banking-e2e",
+    "name": "Mini Bank API",
+    "description": "API tests for the Mini Bank demo app, run via Newman.\n\nConventions:\n- The automatic cookie jar is disabled on every request (protocolProfileBehavior.disableCookies), so authentication is always explicit: the login request stores the session token in a collection variable and authenticated requests send it in a Cookie header. This keeps the unauthenticated 401 tests deterministic regardless of request order.\n- The run assumes a freshly seeded database (`npm run seed`); `npm run test:api` does this automatically. Counts and balances asserted here derive from the seed state plus the single successful transfer this collection performs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "sessionToken", "value": "" },
+    { "key": "checkingAccountId", "value": "" },
+    { "key": "savingsAccountId", "value": "" },
+    { "key": "checkingBalance", "value": "" },
+    { "key": "savingsBalance", "value": "" },
+    { "key": "transferAmount", "value": "25" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login — missing fields",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"explains what is required\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"Username and password are required.\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login — invalid credentials",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test(\"does not set a session cookie\", function () {",
+                  "    pm.expect(pm.response.headers.get(\"Set-Cookie\")).to.be.oneOf([null, undefined]);",
+                  "});",
+                  "",
+                  "pm.test(\"uses the same message as an unknown user (no enumeration)\", function () {",
+                  "    pm.expect(pm.response.json().error).to.eql(\"Invalid username or password.\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\": \"jane.doe\", \"password\": \"wrong-password\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Login — valid credentials",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns the user profile\", function () {",
+                  "    const user = pm.response.json().user;",
+                  "    pm.expect(user.username).to.eql(\"jane.doe\");",
+                  "    pm.expect(user.fullName).to.eql(\"Jane Doe\");",
+                  "});",
+                  "",
+                  "pm.test(\"sets an httpOnly session cookie\", function () {",
+                  "    const setCookie = pm.response.headers.get(\"Set-Cookie\");",
+                  "    pm.expect(setCookie).to.include(\"session_token=\");",
+                  "    pm.expect(setCookie.toLowerCase()).to.include(\"httponly\");",
+                  "",
+                  "    // Store the token: every authenticated request sends it explicitly.",
+                  "    const token = /session_token=([^;]+)/.exec(setCookie)[1];",
+                  "    pm.collectionVariables.set(\"sessionToken\", token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\": \"jane.doe\", \"password\": \"Password123!\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Accounts",
+      "item": [
+        {
+          "name": "Accounts — unauthenticated",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts"]
+            }
+          }
+        },
+        {
+          "name": "Accounts — authenticated",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const accounts = pm.response.json().accounts;",
+                  "",
+                  "pm.test(\"returns the two seeded accounts\", function () {",
+                  "    pm.expect(accounts).to.have.lengthOf(2);",
+                  "    const names = accounts.map(a => a.name).sort();",
+                  "    pm.expect(names).to.eql([\"Checking\", \"Savings\"]);",
+                  "});",
+                  "",
+                  "pm.test(\"serializes accounts without leaking Mongo internals\", function () {",
+                  "    accounts.forEach(account => {",
+                  "        pm.expect(account.id).to.be.a(\"string\");",
+                  "        pm.expect(account.balance).to.be.a(\"number\");",
+                  "        pm.expect(account.currency).to.eql(\"USD\");",
+                  "        pm.expect(account).to.not.have.property(\"_id\");",
+                  "        pm.expect(account).to.not.have.property(\"userId\");",
+                  "    });",
+                  "});",
+                  "",
+                  "// Stash ids and balances for the transfer tests (delta assertions).",
+                  "const checking = accounts.find(a => a.name === \"Checking\");",
+                  "const savings = accounts.find(a => a.name === \"Savings\");",
+                  "pm.collectionVariables.set(\"checkingAccountId\", checking.id);",
+                  "pm.collectionVariables.set(\"savingsAccountId\", savings.id);",
+                  "pm.collectionVariables.set(\"checkingBalance\", checking.balance);",
+                  "pm.collectionVariables.set(\"savingsBalance\", savings.balance);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transfers",
+      "item": [
+        {
+          "name": "Transfer — unauthenticated",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": 10}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — success",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"debits and credits the exact amount\", function () {",
+                  "    const amount = Number(pm.collectionVariables.get(\"transferAmount\"));",
+                  "    const before = {",
+                  "        checking: Number(pm.collectionVariables.get(\"checkingBalance\")),",
+                  "        savings: Number(pm.collectionVariables.get(\"savingsBalance\"))",
+                  "    };",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.fromAccount.balance).to.eql(before.checking - amount);",
+                  "    pm.expect(body.toAccount.balance).to.eql(before.savings + amount);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": {{transferAmount}}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — insufficient funds",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400 with INSUFFICIENT_FUNDS\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().code).to.eql(\"INSUFFICIENT_FUNDS\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": 999999}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — negative amount",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400 with INVALID_AMOUNT\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().code).to.eql(\"INVALID_AMOUNT\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": -10}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — sub-cent precision",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400 with INVALID_AMOUNT\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().code).to.eql(\"INVALID_AMOUNT\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": 10.123}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — same account",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400 with SAME_ACCOUNT\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "    pm.expect(pm.response.json().code).to.eql(\"SAME_ACCOUNT\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{checkingAccountId}}\", \"amount\": 10}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — unknown account",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 404 with ACCOUNT_NOT_FOUND\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "    pm.expect(pm.response.json().code).to.eql(\"ACCOUNT_NOT_FOUND\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"000000000000000000000000\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": 10}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        },
+        {
+          "name": "Transfer — malformed body",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400 for a string amount\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fromAccountId\": \"{{checkingAccountId}}\", \"toAccountId\": \"{{savingsAccountId}}\", \"amount\": \"10\"}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/transfers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transfers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transactions",
+      "item": [
+        {
+          "name": "Transactions — unauthenticated",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Transactions — full history",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const transactions = pm.response.json().transactions;",
+                  "",
+                  "pm.test(\"contains the 12 seeded entries plus the pair from this run's transfer\", function () {",
+                  "    pm.expect(transactions).to.have.lengthOf(14);",
+                  "});",
+                  "",
+                  "pm.test(\"is sorted newest first\", function () {",
+                  "    const dates = transactions.map(t => t.createdAt);",
+                  "    const sorted = [...dates].sort().reverse();",
+                  "    pm.expect(dates).to.eql(sorted);",
+                  "});",
+                  "",
+                  "pm.test(\"every entry has the serialized shape\", function () {",
+                  "    transactions.forEach(t => {",
+                  "        pm.expect(t.id).to.be.a(\"string\");",
+                  "        pm.expect(t.accountId).to.be.a(\"string\");",
+                  "        pm.expect([\"transfer_in\", \"transfer_out\"]).to.include(t.type);",
+                  "        pm.expect(t.amount).to.be.a(\"number\");",
+                  "        pm.expect(t.createdAt).to.match(/^\\d{4}-\\d{2}-\\d{2}T/);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Transactions — filter by account",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"only returns entries for the requested account\", function () {",
+                  "    const transactions = pm.response.json().transactions;",
+                  "    const checkingId = pm.collectionVariables.get(\"checkingAccountId\");",
+                  "    // 6 seeded transfers + this run's transfer, one entry each.",
+                  "    pm.expect(transactions).to.have.lengthOf(7);",
+                  "    transactions.forEach(t => pm.expect(t.accountId).to.eql(checkingId));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?accountId={{checkingAccountId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [{ "key": "accountId", "value": "{{checkingAccountId}}" }]
+            }
+          }
+        },
+        {
+          "name": "Transactions — filter by date range",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// [30 days ago, yesterday] excludes both the 35-day-old seeded",
+                  "// transfer and the pair created by this run (dated today).",
+                  "function isoDaysAgo(days) {",
+                  "    const d = new Date();",
+                  "    d.setDate(d.getDate() - days);",
+                  "    return d.toISOString().slice(0, 10);",
+                  "}",
+                  "pm.collectionVariables.set(\"fromDate\", isoDaysAgo(30));",
+                  "pm.collectionVariables.set(\"toDate\", isoDaysAgo(1));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"returns only entries inside the range\", function () {",
+                  "    const transactions = pm.response.json().transactions;",
+                  "    const from = pm.collectionVariables.get(\"fromDate\");",
+                  "    const to = pm.collectionVariables.get(\"toDate\");",
+                  "    // Seeded transfers at 28, 20, 14, 7 and 2 days ago → 5 pairs.",
+                  "    pm.expect(transactions).to.have.lengthOf(10);",
+                  "    transactions.forEach(t => {",
+                  "        const day = t.createdAt.slice(0, 10);",
+                  "        pm.expect(day >= from && day <= to, `${day} within [${from}, ${to}]`).to.be.true;",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?from={{fromDate}}&to={{toDate}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                { "key": "from", "value": "{{fromDate}}" },
+                { "key": "to", "value": "{{toDate}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transactions — invalid accountId",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?accountId=not-a-valid-id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [{ "key": "accountId", "value": "not-a-valid-id" }]
+            }
+          }
+        },
+        {
+          "name": "Transactions — unknown accountId",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?accountId=000000000000000000000000",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [
+                { "key": "accountId", "value": "000000000000000000000000" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transactions — invalid date",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/transactions?from=not-a-date",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "transactions"],
+              "query": [{ "key": "from", "value": "not-a-date" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Logout",
+      "item": [
+        {
+          "name": "Logout",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"returns 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.json().ok).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Accounts after logout",
+          "protocolProfileBehavior": { "disableCookies": true },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"the session is destroyed server-side, not just the cookie\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Cookie", "value": "session_token={{sessionToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/accounts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "accounts"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

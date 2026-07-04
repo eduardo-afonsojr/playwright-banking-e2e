@@ -9,6 +9,7 @@
     "lint": "next lint",
     "seed": "tsx scripts/seed.ts",
     "test": "jest",
+    "test:api": "npm run seed && newman run api-tests/banking-api.postman_collection.json -e api-tests/local.postman_environment.json",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report"
@@ -36,6 +37,7 @@
     "eslint-config-next": "14.2.35",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
+    "newman": "^6.2.2",
     "tsx": "^4.23.0",
     "typescript": "^5"
   }
