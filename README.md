@@ -9,7 +9,7 @@ point of this repository is the quality layer wrapped around it:
 
 | Layer | Tooling | What it covers |
 |---|---|---|
-| E2E | Playwright + TypeScript, Page Object Model | User journeys: login, account listing, transfers, history filtering |
+| E2E | Playwright + TypeScript, Page Object Model | User journeys (login, accounts, transfers, history filtering) + failure paths via network interception |
 | Unit | Jest | Business rules (transfer validation) in isolation |
 | Integration | Jest + real MongoDB | API route handlers, persistence, auth |
 | Component | Testing Library | Form behavior with mocked boundaries |
@@ -123,7 +123,12 @@ because otherwise Postman silently attaches the logged-in cookie to the
 - **Newman** exercises the full HTTP surface (serialization, cookies, status
   codes) against a running production build.
 - **Playwright** is reserved for what only a browser can verify: journeys,
-  navigation, rendered state, native form validation.
+  navigation, rendered state, native form validation — plus **failure
+  paths**: `page.route()` simulates API 5xx responses, dropped connections
+  and slow requests to prove the UI degrades gracefully (readable error, no
+  fake success, form recovers). Writing these specs immediately exposed a
+  real bug: neither form handled network-level failures, leaving the user
+  with no feedback at all.
 
 ## CI pipeline
 

@@ -70,6 +70,22 @@ describe("LoginForm", () => {
     expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
   });
 
+  it("shows the generic error when the request itself fails", async () => {
+    const fetchMock = jest
+      .fn()
+      .mockRejectedValue(new TypeError("Failed to fetch"));
+    global.fetch = fetchMock as unknown as typeof fetch;
+    render(<LoginForm />);
+
+    await fillAndSubmit("jane.doe", "whatever");
+
+    expect(
+      await screen.findByText("Login failed. Please try again."),
+    ).toBeInTheDocument();
+    expect(push).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
+  });
+
   it("falls back to a generic message when the error body is not JSON", async () => {
     const fetchMock = jest.fn().mockResolvedValue({
       ok: false,

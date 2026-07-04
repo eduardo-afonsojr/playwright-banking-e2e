@@ -30,6 +30,9 @@ export function LoginForm() {
 
       router.push("/");
       router.refresh();
+    } catch {
+      // Network-level failure: the request never got a response.
+      setError("Login failed. Please try again.");
     } finally {
       setSubmitting(false);
     }

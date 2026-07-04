@@ -41,6 +41,9 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
       setAmount("");
       // Refresh server-rendered balances elsewhere in the app.
       router.refresh();
+    } catch {
+      // Network-level failure: the request never got a response.
+      setError("Transfer failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
