@@ -4,7 +4,7 @@
  *
  *   test("...", async ({ loginPage, dashboardPage }) => { ... });
  *
- * Extend this file — never import @playwright/test directly in specs.
+ * Extend this file instead of importing @playwright/test directly in specs.
  */
 import { test as base } from "@playwright/test";
 import { LoginPage } from "../pages/LoginPage";

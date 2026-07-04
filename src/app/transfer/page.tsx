@@ -31,7 +31,7 @@ export default async function TransferPage() {
 
         <div className="card">
           <h2>Current balances</h2>
-          {/* Text stays "Name: $amount" — the E2E specs assert it. */}
+          {/* Text stays "Name: $amount" because the E2E specs assert it. */}
           <ul className="balance-strip" data-testid="transfer-balances">
             {userAccounts.map((account) => (
               <li key={account._id.toHexString()}>

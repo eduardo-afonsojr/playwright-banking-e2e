@@ -2,12 +2,12 @@
 
 [![CI](https://github.com/eduardo-afonsojr/playwright-banking-e2e/actions/workflows/ci.yml/badge.svg)](https://github.com/eduardo-afonsojr/playwright-banking-e2e/actions/workflows/ci.yml)
 
-**Live demo:** [playwright-banking-e2e.vercel.app](https://playwright-banking-e2e.vercel.app) — sign in with `jane.doe` / `Password123!` (fictional seed data; Vercel + MongoDB Atlas free tier)
+**Live demo:** [playwright-banking-e2e.vercel.app](https://playwright-banking-e2e.vercel.app). Sign in with `jane.doe` / `Password123!` (fictional seed data, hosted on Vercel and MongoDB Atlas free tiers).
 
-A test-architecture showcase. The application — a small banking app (login,
+A test-architecture showcase. The application is a small banking app (login,
 accounts dashboard, transfers, transaction history) built with Next.js 14,
-TypeScript and MongoDB — is deliberately simple: it exists to be tested. The
-point of this repository is the quality layer wrapped around it:
+TypeScript and MongoDB. It is deliberately simple: it exists to be tested.
+The point of this repository is the quality layer wrapped around it:
 
 | Layer | Tooling | What it covers |
 |---|---|---|
@@ -25,12 +25,12 @@ point of this repository is the quality layer wrapped around it:
 A seeded user (`jane.doe` / `Password123!`) owns two accounts and can move
 money between them. Four API routes back the UI, all MongoDB-backed:
 
-- `POST /api/auth/login` — credentials auth; opaque session token stored in
+- `POST /api/auth/login`: credentials auth; opaque session token stored in
   MongoDB (TTL-indexed) and delivered as an httpOnly cookie
-- `GET /api/accounts` — the user's accounts and balances
-- `POST /api/transfers` — validates and executes transfers (insufficient
+- `GET /api/accounts`: the user's accounts and balances
+- `POST /api/transfers`: validates and executes transfers (insufficient
   funds, negative/zero/sub-cent amounts, same-account, unknown account)
-- `GET /api/transactions` — history with account and date-range filters,
+- `GET /api/transactions`: history with account and date-range filters,
   paginated (`page`/`pageSize`) with a stable sort so debit/credit pairs
   sharing a timestamp never repeat or vanish across page boundaries
 
@@ -38,7 +38,7 @@ A single seed module (`src/lib/db/seed.ts`) resets the database to a known
 state: one user, two accounts, and 12 transactions spread over 35 days so
 date-range filtering has meaningful data. The CLI (`npm run seed`), the
 Playwright setup project, and the Jest integration tests all import the same
-function — test data cannot drift from the app.
+function, so test data cannot drift from the app.
 
 ## Repository layout
 
@@ -106,7 +106,7 @@ here, each of which earned its place:
   running specs (always dated *now*) can never leak into the expected set.
 - **Traces on first retry, retries in CI only.** Locally a failure should
   fail loudly; in CI the retry captures a full trace for the HTML report.
-- **Deterministic seed, reset at suite start** — no test depends on leftover
+- **Deterministic seed, reset at suite start.** No test depends on leftover
   state from a previous run.
 
 The same thinking shows up in the Postman collection: the automatic cookie
@@ -117,22 +117,22 @@ because otherwise Postman silently attaches the logged-in cookie to the
 ### Test pyramid: what runs where, and why
 
 - **Validation rules** (`src/lib/transfers/validation.ts`) are a pure module
-  with no framework or database dependency — unit-tested exhaustively,
-  including boundaries (exact balance, $0.01, NaN, sub-cent precision) and
-  rule precedence.
+  with no framework or database dependency. They are unit-tested
+  exhaustively, including boundaries (exact balance, $0.01, NaN, sub-cent
+  precision) and rule precedence.
 - **API routes** are integration-tested by calling the handlers directly as
-  functions against a real MongoDB — no HTTP server, but real persistence
+  functions against a real MongoDB: no HTTP server, but real persistence
   and real auth. Each Jest worker gets its own database
   (`banking_test_${JEST_WORKER_ID}`), so test files parallelize safely.
 - **Newman** exercises the full HTTP surface (serialization, cookies, status
   codes) against a running production build.
 - **Playwright** is reserved for what only a browser can verify: journeys,
-  navigation, rendered state, native form validation — plus **failure
-  paths**: `page.route()` simulates API 5xx responses, dropped connections
-  and slow requests to prove the UI degrades gracefully (readable error, no
-  fake success, form recovers). Writing these specs immediately exposed a
-  real bug: neither form handled network-level failures, leaving the user
-  with no feedback at all.
+  navigation, rendered state, native form validation. It also covers
+  failure paths, where `page.route()` simulates API 5xx responses, dropped
+  connections and slow requests to prove the UI degrades gracefully
+  (readable error, no fake success, form recovers). These specs exposed a
+  real bug on their first run: neither form handled network-level failures,
+  leaving the user with no feedback at all.
 
 ## CI pipeline
 
@@ -150,13 +150,13 @@ Sequential gates ordered by cost: the cheapest checks fail first. Every test
 job gets a health-checked MongoDB 7 service container. The Newman and
 Playwright stages run against the **production build** (`next build` +
 `next start`), not the dev server. E2E shards emit blob reports that a final
-job merges into a single HTML report, published as an artifact **even when a
-shard fails** — that is exactly when the report matters. Superseded runs on
+job merges into a single HTML report, published as an artifact even when a
+shard fails, which is exactly when the report matters. Superseded runs on
 the same branch are auto-cancelled.
 
 ### GitLab CI mirror
 
-[`.gitlab-ci.yml`](.gitlab-ci.yml) mirrors the pipeline stage-for-stage — my
+[`.gitlab-ci.yml`](.gitlab-ci.yml) mirrors the pipeline stage for stage. My
 professional background is GitLab CI, and the mirror documents the
 equivalences directly in the config:
 
@@ -172,10 +172,10 @@ equivalences directly in the config:
 
 ![Playwright HTML report](docs/playwright-report.png)
 
-**[Browse the latest report](https://eduardo-afonsojr.github.io/playwright-banking-e2e/)** —
-every push to `main` publishes the merged HTML report to GitHub Pages.
-It is also uploaded as the `playwright-report` artifact on every run
-(including pull requests).
+Every push to `main` publishes the merged HTML report to GitHub Pages:
+**[browse the latest report](https://eduardo-afonsojr.github.io/playwright-banking-e2e/)**.
+Every run (including pull requests) also uploads it as the
+`playwright-report` artifact.
 
 ## Running locally
 

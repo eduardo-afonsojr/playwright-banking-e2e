@@ -9,13 +9,13 @@ const SAVINGS = SEED_ACCOUNTS.savings.name;
  * simulates infrastructure failures (5xx, dropped connections, latency)
  * that are impractical to produce with a real backend on demand.
  *
- * The question under test is never "does the API fail?" — it is "does the
+ * The question under test is never "does the API fail?". It is "does the
  * UI degrade gracefully when it does?": a readable error, no fake success,
  * and a form the user can retry.
  *
  * None of these specs reach the real API or touch the database, so they
  * are read-only and fully parallel-safe. (Server-rendered pages fetch data
- * on the server, out of reach of client-side interception — which is why
+ * on the server, out of reach of client-side interception, which is why
  * these specs target the two client-side forms.)
  */
 
@@ -116,7 +116,7 @@ test.describe("Transfer failure paths", () => {
     page,
   }) => {
     // Delaying the (mocked) response pins the pending UI state down
-    // deterministically — no real backend is reliably slow on purpose.
+    // deterministically; no real backend is reliably slow on purpose.
     await page.route("**/api/transfers", async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 800));
       await route.fulfill({

@@ -1,7 +1,7 @@
 /**
  * Shared helpers for API route integration tests. Route handlers are plain
- * functions (Request) => Response, so tests call them directly — no HTTP
- * server involved — while the data layer talks to a real MongoDB.
+ * functions (Request) => Response, so tests call them directly without an
+ * HTTP server, while the data layer talks to a real MongoDB.
  */
 import { POST as loginRoute } from "@/app/api/auth/login/route";
 import { SEED_USER } from "@/lib/db/seed";

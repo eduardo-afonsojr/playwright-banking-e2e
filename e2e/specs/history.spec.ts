@@ -19,11 +19,11 @@ test.describe("Transaction history", () => {
     await historyPage.goto();
 
     // The seed alone (12 entries) overflows one page, so page 1 always
-    // holds exactly one page worth of rows — no matter how many extra
+    // holds exactly one page worth of rows, no matter how many extra
     // transactions concurrent specs have created.
     await expect(historyPage.rows).toHaveCount(TRANSACTIONS_PAGE_SIZE);
     await expect(historyPage.pageInfo).toHaveText(
-      new RegExp(`Showing 1–${TRANSACTIONS_PAGE_SIZE} of \\d+`),
+      new RegExp(`Showing 1-${TRANSACTIONS_PAGE_SIZE} of \\d+`),
     );
     await expect(historyPage.pageNumber).toContainText("Page 1");
     await expect(historyPage.prevPage).toHaveAttribute("aria-disabled", "true");
@@ -45,7 +45,7 @@ test.describe("Transaction history", () => {
     await expect(historyPage.nextPage).toHaveAttribute("aria-disabled", "true");
 
     // Page 2 holds the seeded overflow (2 rows) plus anything concurrent
-    // specs added — never more than a full page.
+    // specs added, but never more than a full page.
     const secondPageCount = await historyPage.rows.count();
     expect(secondPageCount).toBeGreaterThanOrEqual(2);
     expect(secondPageCount).toBeLessThanOrEqual(TRANSACTIONS_PAGE_SIZE);

@@ -18,7 +18,7 @@
       "name": "Auth",
       "item": [
         {
-          "name": "Login — missing fields",
+          "name": "Login: missing fields",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -49,7 +49,7 @@
           }
         },
         {
-          "name": "Login — invalid credentials",
+          "name": "Login: invalid credentials",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -87,7 +87,7 @@
           }
         },
         {
-          "name": "Login — valid credentials",
+          "name": "Login: valid credentials",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -138,7 +138,7 @@
       "name": "Accounts",
       "item": [
         {
-          "name": "Accounts — unauthenticated",
+          "name": "Accounts: unauthenticated",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -164,7 +164,7 @@
           }
         },
         {
-          "name": "Accounts — authenticated",
+          "name": "Accounts: authenticated",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -223,7 +223,7 @@
       "name": "Transfers",
       "item": [
         {
-          "name": "Transfer — unauthenticated",
+          "name": "Transfer: unauthenticated",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -253,7 +253,7 @@
           }
         },
         {
-          "name": "Transfer — success",
+          "name": "Transfer: success",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -297,7 +297,7 @@
           }
         },
         {
-          "name": "Transfer — insufficient funds",
+          "name": "Transfer: insufficient funds",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -331,7 +331,7 @@
           }
         },
         {
-          "name": "Transfer — negative amount",
+          "name": "Transfer: negative amount",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -365,7 +365,7 @@
           }
         },
         {
-          "name": "Transfer — sub-cent precision",
+          "name": "Transfer: sub-cent precision",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -399,7 +399,7 @@
           }
         },
         {
-          "name": "Transfer — same account",
+          "name": "Transfer: same account",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -433,7 +433,7 @@
           }
         },
         {
-          "name": "Transfer — unknown account",
+          "name": "Transfer: unknown account",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -467,7 +467,7 @@
           }
         },
         {
-          "name": "Transfer — malformed body",
+          "name": "Transfer: malformed body",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -505,7 +505,7 @@
       "name": "Transactions",
       "item": [
         {
-          "name": "Transactions — unauthenticated",
+          "name": "Transactions: unauthenticated",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -531,7 +531,7 @@
           }
         },
         {
-          "name": "Transactions — full history",
+          "name": "Transactions: full history",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -588,7 +588,7 @@
           }
         },
         {
-          "name": "Transactions — second page",
+          "name": "Transactions: second page",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -624,7 +624,7 @@
           }
         },
         {
-          "name": "Transactions — invalid page",
+          "name": "Transactions: invalid page",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -653,7 +653,7 @@
           }
         },
         {
-          "name": "Transactions — filter by account",
+          "name": "Transactions: filter by account",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -690,7 +690,7 @@
           }
         },
         {
-          "name": "Transactions — filter by date range",
+          "name": "Transactions: filter by date range",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -751,7 +751,7 @@
           }
         },
         {
-          "name": "Transactions — invalid accountId",
+          "name": "Transactions: invalid accountId",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -780,7 +780,7 @@
           }
         },
         {
-          "name": "Transactions — unknown accountId",
+          "name": "Transactions: unknown accountId",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {
@@ -811,7 +811,7 @@
           }
         },
         {
-          "name": "Transactions — invalid date",
+          "name": "Transactions: invalid date",
           "protocolProfileBehavior": { "disableCookies": true },
           "event": [
             {

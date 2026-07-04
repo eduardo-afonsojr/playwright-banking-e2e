@@ -123,7 +123,7 @@ jobs:
   e2e-report:
     name: Merge Playwright HTML report
     needs: e2e
-    # Publish the report even when a shard failed — that is when it matters.
+    # Publish the report even when a shard failed; that is when it matters.
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:

@@ -206,7 +206,7 @@ export default async function HistoryPage({
             </table>
             <div className="pagination" data-testid="history-pagination">
               <span data-testid="history-page-info">
-                Showing {showingFrom}–{showingTo} of {totalCount}
+                Showing {showingFrom}-{showingTo} of {totalCount}
               </span>
               <span className="pagination-controls">
                 {page > 1 ? (
