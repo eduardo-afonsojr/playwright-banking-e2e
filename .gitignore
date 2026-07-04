@@ -34,6 +34,11 @@ yarn-error.log*
 # local tooling
 .claude/
 
+# playwright
+/test-results/
+/playwright-report/
+/e2e/.auth/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
