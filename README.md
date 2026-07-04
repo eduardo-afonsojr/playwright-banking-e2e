@@ -172,8 +172,10 @@ equivalences directly in the config:
 
 ![Playwright HTML report](docs/playwright-report.png)
 
-In CI the merged report is uploaded as the `playwright-report` artifact on
-every run.
+**[Browse the latest report](https://eduardo-afonsojr.github.io/playwright-banking-e2e/)** —
+every push to `main` publishes the merged HTML report to GitHub Pages.
+It is also uploaded as the `playwright-report` artifact on every run
+(including pull requests).
 
 ## Running locally
 
