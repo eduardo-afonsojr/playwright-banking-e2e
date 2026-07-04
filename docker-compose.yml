@@ -1,0 +1,19 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: banking-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: banking
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mongo-data:
