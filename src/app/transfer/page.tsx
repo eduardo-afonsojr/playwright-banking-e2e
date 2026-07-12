@@ -8,6 +8,8 @@ import { TransferForm } from "@/components/TransferForm";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Transfer · Mini Bank" };
+
 export default async function TransferPage() {
   const user = await getAuthenticatedUser();
   if (!user) {

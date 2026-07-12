@@ -120,6 +120,32 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
           onChange={(event) => setAmount(event.target.value)}
           required
         />
+        {/* Quick amounts derive from the selected source account's balance,
+            so the user never has to look it up or type it by hand. */}
+        <div className="quick-amounts">
+          {([25, 50, 100] as const).map((percent) => {
+            const balance =
+              accounts.find((account) => account.id === fromAccountId)
+                ?.balance ?? 0;
+            const value = (
+              Math.round(balance * percent) / 100
+            ).toFixed(2);
+            return (
+              <button
+                key={percent}
+                type="button"
+                data-testid={`transfer-quick-${percent}`}
+                onClick={() => {
+                  setAmount(value);
+                  setError(null);
+                  setSuccess(null);
+                }}
+              >
+                {percent === 100 ? "Max" : `${percent}%`}
+              </button>
+            );
+          })}
+        </div>
       </div>
       <button type="submit" data-testid="transfer-submit" disabled={submitting}>
         {submitting ? "Transferring…" : "Transfer"}

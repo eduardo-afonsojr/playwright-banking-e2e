@@ -140,5 +140,9 @@ test.describe("Transaction history", () => {
 
     await expect(historyPage.emptyState).toBeVisible();
     await expect(historyPage.rows).toHaveCount(0);
+
+    // The empty state offers a way back to the unfiltered view.
+    await historyPage.page.getByTestId("history-clear-filters").click();
+    await expect(historyPage.rows).not.toHaveCount(0);
   });
 });

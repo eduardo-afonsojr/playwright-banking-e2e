@@ -36,4 +36,25 @@ test.describe("Accounts dashboard", () => {
       dashboardPage.accountCard(SEED_ACCOUNTS.savings.name),
     ).toBeVisible();
   });
+
+  test("shows the five most recent transactions with a link to the history", async ({
+    dashboardPage,
+    page,
+  }) => {
+    await dashboardPage.goto();
+
+    // The seed alone provides 12 transactions, so the widget is always full.
+    const rows = page.getByTestId("recent-activity-row");
+    await expect(rows).toHaveCount(5);
+
+    // Rows are newest first (dates in the first column of each row).
+    const dates = await rows
+      .locator(".activity-meta")
+      .allInnerTexts();
+    const sorted = [...dates].sort().reverse();
+    expect(dates).toEqual(sorted);
+
+    await page.getByTestId("recent-activity-view-all").click();
+    await expect(page).toHaveURL(/\/history/);
+  });
 });

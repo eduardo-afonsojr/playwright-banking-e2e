@@ -23,7 +23,10 @@ The point of this repository is the quality layer wrapped around it:
 ![Mini Bank dashboard](docs/app-dashboard.png)
 
 A seeded user (`jane.doe` / `Password123!`) owns two accounts and can move
-money between them. Four API routes back the UI, all MongoDB-backed:
+money between them. The dashboard shows total balance and recent activity,
+the transfer form offers quick-amount buttons (25% / 50% / Max) derived from
+the source account's balance, and the whole UI follows the OS light/dark
+preference. Four API routes back the UI, all MongoDB-backed:
 
 - `POST /api/auth/login`: credentials auth; opaque session token stored in
   MongoDB (TTL-indexed) and delivered as an httpOnly cookie

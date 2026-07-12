@@ -5,6 +5,8 @@ import { BrandMark } from "@/components/BrandMark";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "Sign in · Mini Bank" };
+
 export default async function LoginPage() {
   const user = await getAuthenticatedUser();
   if (user) {

@@ -87,6 +87,28 @@ test.describe("Transfers", () => {
     );
   });
 
+  test("quick-amount buttons fill the amount from the source balance", async ({
+    transferPage,
+    request,
+  }) => {
+    const balances = await getBalances(request);
+    const checkingBalance = balances[CHECKING];
+
+    await transferPage.goto();
+    await transferPage.fromSelect.selectOption({ label: CHECKING });
+
+    await transferPage.page.getByTestId("transfer-quick-100").click();
+    await expect(transferPage.amountInput).toHaveValue(
+      checkingBalance.toFixed(2),
+    );
+
+    await transferPage.page.getByTestId("transfer-quick-25").click();
+    await expect(transferPage.amountInput).toHaveValue(
+      (Math.round(checkingBalance * 25) / 100).toFixed(2),
+    );
+    // No submit: this spec only verifies the input plumbing.
+  });
+
   test("blocks negative amounts through native form validation", async ({
     transferPage,
   }) => {

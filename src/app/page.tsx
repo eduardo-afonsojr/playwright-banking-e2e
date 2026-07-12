@@ -1,10 +1,16 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getAuthenticatedUser } from "@/lib/auth/session";
-import { accountsCollection } from "@/lib/db/collections";
-import { formatCurrency } from "@/lib/format";
+import {
+  accountsCollection,
+  transactionsCollection,
+} from "@/lib/db/collections";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { AppNav } from "@/components/AppNav";
 
 export const dynamic = "force-dynamic";
+
+export const metadata = { title: "Dashboard · Mini Bank" };
 
 function AccountIcon({ type }: { type: string }) {
   return (
@@ -59,6 +65,16 @@ export default async function DashboardPage() {
     0,
   );
 
+  const accountNameById = new Map(
+    userAccounts.map((account) => [account._id.toHexString(), account.name]),
+  );
+  const transactions = await transactionsCollection();
+  const recentActivity = await transactions
+    .find({ accountId: { $in: userAccounts.map((account) => account._id) } })
+    .sort({ createdAt: -1, _id: -1 })
+    .limit(5)
+    .toArray();
+
   return (
     <>
       <AppNav fullName={user.fullName} />
@@ -99,6 +115,72 @@ export default async function DashboardPage() {
             </div>
           ))}
         </div>
+
+        <div className="section-header">
+          <h2>Recent activity</h2>
+          <Link
+            className="view-all"
+            href="/history"
+            data-testid="recent-activity-view-all"
+          >
+            View all
+          </Link>
+        </div>
+        <ul className="activity-list" data-testid="recent-activity">
+          {recentActivity.map((transaction) => {
+            const isIncoming = transaction.type === "transfer_in";
+            const accountName = accountNameById.get(
+              transaction.accountId.toHexString(),
+            );
+            const counterparty = accountNameById.get(
+              transaction.counterpartyAccountId.toHexString(),
+            );
+            return (
+              <li
+                key={transaction._id.toHexString()}
+                className="activity-row"
+                data-testid="recent-activity-row"
+              >
+                <span
+                  className={`activity-icon ${isIncoming ? "in" : "out"}`}
+                  aria-hidden="true"
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    {isIncoming ? (
+                      <path d="M12 5v14M5 12l7 7 7-7" />
+                    ) : (
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    )}
+                  </svg>
+                </span>
+                <span className="activity-main">
+                  <span className="activity-title">
+                    {isIncoming
+                      ? `${accountName}: received from ${counterparty}`
+                      : `${accountName}: sent to ${counterparty}`}
+                  </span>
+                  <br />
+                  <span className="activity-meta">
+                    {formatDate(transaction.createdAt)}
+                  </span>
+                </span>
+                <span className={isIncoming ? "amount-in" : "amount-out"}>
+                  {isIncoming ? "+" : "-"}
+                  {formatCurrency(transaction.amount)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
       </main>
     </>
   );

@@ -13,6 +13,8 @@ import type { TransactionDocument } from "@/types/models";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = { title: "History · Mini Bank" };
+
 interface HistorySearchParams {
   accountId?: string;
   from?: string;
@@ -160,7 +162,10 @@ export default async function HistoryPage({
 
         {results.length === 0 ? (
           <div className="card empty-state" data-testid="history-empty">
-            No transactions match the current filters.
+            No transactions match the current filters.{" "}
+            <Link href="/history" data-testid="history-clear-filters">
+              Clear filters
+            </Link>
           </div>
         ) : (
           <div className="table-card">

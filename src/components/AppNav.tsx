@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { LogoutButton } from "./LogoutButton";
 import { BrandMark } from "./BrandMark";
+import { NavLinks } from "./NavLinks";
 
 function initials(fullName: string): string {
   return fullName
@@ -20,17 +20,7 @@ export function AppNav({ fullName }: { fullName: string }) {
           <BrandMark />
           Mini Bank
         </span>
-        <div className="nav-links">
-          <Link href="/" data-testid="nav-dashboard">
-            Dashboard
-          </Link>
-          <Link href="/transfer" data-testid="nav-transfer">
-            Transfer
-          </Link>
-          <Link href="/history" data-testid="nav-history">
-            History
-          </Link>
-        </div>
+        <NavLinks />
         <span className="nav-user">
           <span className="avatar" aria-hidden="true">
             {initials(fullName)}
