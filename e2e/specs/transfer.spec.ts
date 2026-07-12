@@ -87,6 +87,38 @@ test.describe("Transfers", () => {
     );
   });
 
+  test("dashboard shows fresh balances right after a transfer", async ({
+    transferPage,
+    dashboardPage,
+    request,
+  }) => {
+    // Regression test for a user-reported bug: visiting the dashboard primes
+    // the client-side router cache, and navigating back to it right after a
+    // transfer served the stale cached balances for up to 30 seconds.
+    const before = await getBalances(request);
+    const amount = 50;
+
+    // Prime the cache exactly like a real session: dashboard first.
+    await dashboardPage.goto();
+    await dashboardPage.nav.goToTransfer();
+
+    await transferPage.submitTransfer({
+      from: SAVINGS,
+      to: CHECKING,
+      amount: String(amount),
+    });
+    await expect(transferPage.successMessage).toBeVisible();
+
+    // Client-side navigation back to the dashboard must show live data.
+    await transferPage.nav.goToDashboard();
+    await expect(dashboardPage.balanceOf(CHECKING)).toHaveText(
+      formatCurrency(before[CHECKING] + amount),
+    );
+    await expect(dashboardPage.balanceOf(SAVINGS)).toHaveText(
+      formatCurrency(before[SAVINGS] - amount),
+    );
+  });
+
   test("quick-amount buttons fill the amount from the source balance", async ({
     transferPage,
     request,
