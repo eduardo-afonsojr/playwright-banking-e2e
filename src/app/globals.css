@@ -626,6 +626,32 @@ td:first-child {
   text-align: center;
 }
 
+/* ---------- Loading skeletons ---------- */
+
+.skeleton {
+  border-radius: 8px;
+  background: linear-gradient(
+    100deg,
+    var(--border) 30%,
+    var(--surface-hover) 50%,
+    var(--border) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}
+
 /* ---------- Pagination ---------- */
 
 .pagination {

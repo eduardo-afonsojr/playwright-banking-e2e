@@ -47,6 +47,32 @@ test.describe("Navigation", () => {
   });
 });
 
+test.describe("Loading states", () => {
+  test("streams a skeleton while a slow navigation loads", async ({
+    page,
+    dashboardPage,
+  }) => {
+    await dashboardPage.goto();
+
+    // Delay only the React Server Component payload of the history page:
+    // locally the round trip is too fast to ever observe the skeleton, so
+    // the test manufactures the latency it needs to pin the state down.
+    await page.route("**/history*", async (route) => {
+      if (route.request().headers()["rsc"]) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+      }
+      await route.continue();
+    });
+
+    await dashboardPage.nav.goToHistory();
+    await expect(page.getByTestId("page-loading")).toBeVisible();
+
+    // The real content replaces the skeleton once the payload arrives.
+    await expect(page.getByTestId("history-table")).toBeVisible();
+    await expect(page.getByTestId("page-loading")).not.toBeVisible();
+  });
+});
+
 test.describe("Page titles", () => {
   test("each page sets its own document title", async ({
     page,

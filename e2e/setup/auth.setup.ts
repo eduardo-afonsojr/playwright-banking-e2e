@@ -27,4 +27,14 @@ setup("seed database and authenticate", async ({ request }) => {
   expect(response.ok(), "seed user should be able to log in").toBeTruthy();
 
   await request.storageState({ path: STORAGE_STATE_PATH });
+
+  // Warm up the app routes. Meaningless against the production build the
+  // CI uses, but the local dev server compiles routes on demand, and a
+  // first-hit compile mid-test can abort an RSC fetch (Next then falls
+  // back to a full browser navigation, wiping client state under test).
+  await Promise.all(
+    ["/", "/transfer", "/history", "/login"].map((path) =>
+      request.get(path),
+    ),
+  );
 });

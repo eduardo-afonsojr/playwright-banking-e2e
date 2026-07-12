@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { formatCurrency } from "@/lib/format";
 import type { AccountDto } from "@/lib/serialize";
 
 export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
-  const router = useRouter();
   const [fromAccountId, setFromAccountId] = useState(accounts[0]?.id ?? "");
   const [toAccountId, setToAccountId] = useState(accounts[1]?.id ?? "");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // The transfer response carries the authoritative new balances, so the
+  // card updates straight from the mutation result. No router.refresh(),
+  // no extra round trip, and no chance of a Suspense boundary remounting
+  // the form and wiping its state.
+  const [balances, setBalances] = useState<Record<string, number>>(() =>
+    Object.fromEntries(accounts.map((account) => [account.id, account.balance])),
+  );
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -39,8 +45,11 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
 
       setSuccess("Transfer completed successfully.");
       setAmount("");
-      // Refresh server-rendered balances elsewhere in the app.
-      router.refresh();
+      setBalances((previous) => ({
+        ...previous,
+        [data.fromAccount.id]: data.fromAccount.balance,
+        [data.toAccount.id]: data.toAccount.balance,
+      }));
     } catch {
       // Network-level failure: the request never got a response.
       setError("Transfer failed. Please try again.");
@@ -50,7 +59,21 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} data-testid="transfer-form">
+    <>
+      <div className="card">
+        <h2>Current balances</h2>
+        {/* Text stays "Name: $amount" because the E2E specs assert it. */}
+        <ul className="balance-strip" data-testid="transfer-balances">
+          {accounts.map((account) => (
+            <li key={account.id}>
+              {account.name}:{" "}
+              <strong>{formatCurrency(balances[account.id])}</strong>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="card">
+        <form onSubmit={handleSubmit} data-testid="transfer-form">
       {error && (
         <div className="alert alert-error" data-testid="transfer-error">
           {error}
@@ -124,9 +147,7 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
             so the user never has to look it up or type it by hand. */}
         <div className="quick-amounts">
           {([25, 50, 100] as const).map((percent) => {
-            const balance =
-              accounts.find((account) => account.id === fromAccountId)
-                ?.balance ?? 0;
+            const balance = balances[fromAccountId] ?? 0;
             const value = (
               Math.round(balance * percent) / 100
             ).toFixed(2);
@@ -147,9 +168,15 @@ export function TransferForm({ accounts }: { accounts: AccountDto[] }) {
           })}
         </div>
       </div>
-      <button type="submit" data-testid="transfer-submit" disabled={submitting}>
-        {submitting ? "Transferring…" : "Transfer"}
-      </button>
-    </form>
+          <button
+            type="submit"
+            data-testid="transfer-submit"
+            disabled={submitting}
+          >
+            {submitting ? "Transferring…" : "Transfer"}
+          </button>
+        </form>
+      </div>
+    </>
   );
 }
