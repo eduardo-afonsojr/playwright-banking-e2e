@@ -65,6 +65,26 @@ test.describe("Transaction history", () => {
     await expect(historyPage.rows).toHaveCount(TRANSACTIONS_PAGE_SIZE);
   });
 
+  test("offers clear-filters whenever a filter is active", async ({
+    historyPage,
+  }) => {
+    await historyPage.goto();
+    const clearFilters = historyPage.page.getByTestId("history-clear-filters");
+
+    // No filters yet: nothing to clear.
+    await expect(clearFilters).not.toBeVisible();
+
+    // With an active filter (and results on screen), the escape hatch shows.
+    await historyPage.applyFilters({ account: CHECKING });
+    await expect(historyPage.rows).not.toHaveCount(0);
+    await expect(clearFilters).toBeVisible();
+
+    await clearFilters.click();
+    await expect(historyPage.page).toHaveURL(/\/history$/);
+    await expect(historyPage.rows).toHaveCount(TRANSACTIONS_PAGE_SIZE);
+    await expect(clearFilters).not.toBeVisible();
+  });
+
   test("disables pagination when everything fits one page", async ({
     historyPage,
   }) => {

@@ -545,6 +545,18 @@ button.block {
   margin-bottom: 0;
 }
 
+.filters .clear-filters {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 0.62rem 0.25rem;
+}
+
+.filters .clear-filters:hover {
+  color: var(--danger);
+  text-decoration: none;
+}
+
 .table-card {
   background: var(--surface);
   border: 1px solid var(--border);

@@ -158,14 +158,22 @@ export default async function HistoryPage({
           <button type="submit" data-testid="history-filter-apply">
             Apply filters
           </button>
+          {/* Escape hatch shown whenever any filter is active, so the user
+              never gets stuck in a filtered view. */}
+          {(accountId || from || to) && (
+            <Link
+              className="clear-filters"
+              href="/history"
+              data-testid="history-clear-filters"
+            >
+              Clear filters
+            </Link>
+          )}
         </form>
 
         {results.length === 0 ? (
           <div className="card empty-state" data-testid="history-empty">
-            No transactions match the current filters.{" "}
-            <Link href="/history" data-testid="history-clear-filters">
-              Clear filters
-            </Link>
+            No transactions match the current filters.
           </div>
         ) : (
           <div className="table-card">
